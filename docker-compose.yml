@@ -1,21 +1,23 @@
-version: "3.8"
 services:
   app:
     build: .
     ports:
       - "5000:5000"
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/mydatabase
+    env_file:
+      - .env
     depends_on:
-      - db
-    volumes:
-      - .:/app
+      db:
+        condition: service_healthy
+
   db:
     image: postgres:13
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydatabase
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
